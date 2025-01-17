@@ -1,0 +1,24 @@
+[tool.ruff]
+line-length = 88
+exclude = ["versioneer.py", "pycatzao/_version.py"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "D",    # pydocstyle
+    "F",    # Pyflakes
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "I",    # isort
+]
+ignore = [
+]
+
+[tool.ruff.lint.per-file-ignores]
+"setup.py" = ["D"]
+"docs/conf.py" = ["D"]
+"tests/**" = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
