@@ -1,8 +1,8 @@
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/release/python-3100/)
 [![PyPI](https://img.shields.io/pypi/v/pycatzao)](https://pypi.org/project/pycatzao/)
 [![Documentation](https://github.com/DLR-KN/pycatzao/actions/workflows/deploy_docs.yml/badge.svg)](https://DLR-KN.github.io/pycatzao/)
-[![Test coverage](https://codecov.io/gh/avitase/pycatzao/graph/badge.svg?token=???)](https://codecov.io/gh/avitase/pycatzao)
-[![Unit tests](https://github.com/DLR-KN/pycatzao/actions/workflows/run_tests.yml/badge.svg)](https://codecov.io/gh/avitase/pycatzao)
+[![Test coverage](https://codecov.io/gh/DLR-KN/pycatzao/graph/badge.svg?token=LJZ8G0DCHS)](https://codecov.io/gh/DLR-KN/pycatzao)
+[![Unit tests](https://github.com/DLR-KN/pycatzao/actions/workflows/run_tests.yml/badge.svg)](https://codecov.io/gh/DLR-KN/pycatzao)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 [[Documentation]](https://DLR-KN.github.io/pycatzao/)
