@@ -12,12 +12,15 @@ on:
         type: string
 
 jobs:
-  test-docs:
+  build-docs:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # versioneer needs this information
+          fetch-tags: true
 
       - name: Install system requirements
         run: |
@@ -32,7 +35,6 @@ jobs:
       - name: Install doc requirements
         run: |
           pip install -e .[dev]
-          pip install -r docs/requirements.txt
 
       - name: Build docs
         run: |

@@ -18,11 +18,12 @@ copyright = ""
 author = "Nis Meinert"
 
 # The short X.Y version
-parsed_version = re.match(r"(\d+\.\d+\.\d+)", __version__)
-version = parsed_version.group(1) if parsed_version else "0.0.0"
+parsed_version = re.match(r"(\d+\.\d+)", __version__)
+version = parsed_version.group(1) if parsed_version else __version__
 
 # The full version, including alpha/beta/rc tags
-release = __version__
+parsed_release = re.match(r"(\d+\.\d+\.\d+)", __version__)
+release = parsed_release.group(1) if parsed_release else __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
