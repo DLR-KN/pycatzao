@@ -24,6 +24,10 @@ def random_type2_message(rng, *, n_max, dtype, tod, compress):
     az12 = np.arctan2(np.sin(az1) + np.sin(az2), np.cos(az1) + np.cos(az2))
     az12 = np.rad2deg(az12)
 
+    daz12 = az2 - az1
+    daz12 = np.arctan2(np.sin(daz12), np.cos(daz12))
+    daz12 = np.rad2deg(daz12)
+
     if az12 < 0:
         az12 += 360
 
@@ -47,8 +51,9 @@ def random_type2_message(rng, *, n_max, dtype, tod, compress):
         "sic": sic,
         "idx": msg_index,
         "az": az12,
-        "cell_offset": cell_offset,
-        "cell_width": cell_width,
+        "az_cell_size": daz12,
+        "r_cell_offset": cell_offset,
+        "r_cell_size": cell_width,
         "amp": amp,
         "tod": tod,
     }

@@ -1,6 +1,11 @@
 import numpy as np
 
 
+def _circular_distance(distance):
+    distance = np.deg2rad(distance)
+    return np.rad2deg(np.atan2(np.sin(distance), np.cos(distance))).item()
+
+
 def _circular_mean(a, b):
     a = np.deg2rad(a)
     b = np.deg2rad(b)

@@ -55,7 +55,7 @@ def test_single_type2_message(seed, n_max, dtype, compress, tod):
     assert msg["amp"].ndim == 1
     idx = np.arange(len(msg["amp"]))[non_zero]
     assert decoded["r"] == pytest.approx(
-        msg["cell_offset"] + idx * msg["cell_width"], rel=1e-3
+        msg["r_cell_offset"] + idx * msg["r_cell_size"], rel=1e-3
     )
 
     assert decoded["amp"] == pytest.approx(msg["amp"][non_zero])

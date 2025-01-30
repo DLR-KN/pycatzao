@@ -25,8 +25,10 @@ message, i.e.,
 for blocks of message type `001` (Video Summary message), and
 
  - `idx`: Message sequence identifier
- - `az`: The azimuth in degrees. This value is calculated as the circular mean of `START_AZ` and `END_AZ` as both values are often set to non-meaningful values and it is very easy to confuse their range with the sensor resolution. In contrast, their circular mean is less ambiguous and can be used safely for downstream tasks.
+ - `az`: The azimuth in degrees. This value is calculated as the circular mean of `START_AZ` and `END_AZ`.
+ - `az_cell_size`: The azimuthal cell size in degrees. This value is calculated as the difference of `START_AZ` and `END_AZ`. Note that both values are often set to non-meaningful values and it is very easy to confuse their range with the sensor resolution. (In contrast, their circular mean, `az`, is less ambiguous and can be used safely for downstream tasks.)
  - `r`: Range of the data points in meters
+ - `r_cell_size`: The radial cell size in meters. Similar to `az_cell_size`, don't confuse this value with the radial sensor resolution which can be (significantly) larger.
  - `amp`: Video signal amplitude (aka the "data points")
 
 for message type `002` (Video message), as well as
@@ -87,6 +89,7 @@ def _decode_block(data):
             i += 12
 
             msg["az"] = _utils._circular_mean(start_az, end_az)
+            msg["az_cell_size"] = _utils._circular_distance(end_az - start_az)
 
             # I240/048
             compression = data[i] & 0x80 == 0x80
@@ -133,6 +136,7 @@ def _decode_block(data):
 
             c = 299_792_458
             msg["r"] = cell_dur * (start_rg + np.arange(nb_cells)) * c / 2
+            msg["r_cell_size"] = cell_dur * c / 2
 
             mask = msg["amp"] > 0
             msg["amp"] = msg["amp"][mask]
@@ -162,12 +166,12 @@ def decode(data):
         >>> data = b'\\xf0\\x00\\x13\\xd1...'
         >>> blocks, state = pycatzao.decode(data[:128])
         >>> blocks
-        [{'sac': 7, 'sic': 42, 'type': 1, 'summary': '...', 'tod': 100.0},
-         {'sac': 7, 'sic': 42, 'type': 2, 'idx': 4711, 'az': 5.9, 'amp': array([248, ...], dtype=uint8), 'r': array([ 94.2, ...], dtype=float32), 'tod': 100.0},
-         {'sac': 7, 'sic': 42, 'type': 2, 'idx': 4712, 'az': 6.4, 'amp': array([127, ...], dtype=uint8), 'r': array([ 89.2, ...], dtype=float32), 'tod': 100.1}]
+        [{'sac': 7, 'sic': 42, 'type': 1, 'summary': ...},
+         {'sac': 7, 'sic': 42, 'type': 2, 'idx': 4711, 'az': 5.9, ...},
+         {'sac': 7, 'sic': 42, 'type': 2, 'idx': 4712, 'az': 6.4, ...}]
         >>> blocks, state = pycatzao.decode(state + data[128:])
         >>> blocks
-        [{'sac': 7, 'sic': 42, 'type': 2, 'idx': 4713, 'az': 6.9, 'amp': array([255, ...], dtype=uint8), 'r': array([ 94.2, ...], dtype=float32), 'tod': 100.2}, ...]
+        [{'sac': 7, 'sic': 42, 'type': 2, 'idx': 4713, 'az': 6.9, ...}]
 
     Args:
         data (bytes):

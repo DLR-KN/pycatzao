@@ -75,5 +75,7 @@ def test_decode_file(seed, n_msg, limit_size, buffer_size, compress, tod, tail):
         for block1, block2 in zip(decoded[1:], expected[1:]):
             assert block1["idx"] == block2["idx"]
             assert block1["az"] == block2["az"]
+            assert block1["az_cell_size"] == block2["az_cell_size"]
             assert np.allclose(block1["r"], block2["r"])
+            assert np.allclose(block1["r_cell_size"], block2["r_cell_size"])
             assert np.allclose(block1["amp"], block2["amp"])
