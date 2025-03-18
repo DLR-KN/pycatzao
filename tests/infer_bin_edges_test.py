@@ -49,9 +49,9 @@ def test_too_few_messages(n_msg, compress, tod):
     "az_start,az_end,az_binning_scheme",
     [
         (
-            [0.0, 0.0, 7, 21, 49],
-            [0.0, 0.0, 21, 35, 63],
-            [-7, 371, 27],
+            [0.0, 0.0, 6, 18, 42],
+            [0.0, 0.0, 18, 30, 54],
+            [-6, 366, 32],
         )
     ],
 )

@@ -89,7 +89,16 @@ def infer_bin_edges(data):
     daz = np.diff(az)
 
     daz_min = 0.01  # magic value... in the end this is just a heuristic:)
-    daz = np.median(daz[np.abs(daz) > daz_min])
+    daz, c = np.unique(daz[np.abs(daz) > daz_min], return_counts=True)
+    if daz.size < 1:
+        return None, data
+
+    frac = daz / daz[np.argmax(c)]
+    daz = daz[(frac > 0.9) & (frac < 1.1)].mean()
+
+    az_num = round(360.0 / daz)
+    daz = 360.0 / az_num
+
     az_start = (az0 + np.sign(180 - az0) * daz / 2) % daz - daz
     az_end = az_start + np.ceil((360 - az_start) / daz) * daz
 
@@ -105,7 +114,7 @@ def infer_bin_edges(data):
     return {
         "az": {
             "start": az_start.item(),
-            "num": round((az_end - az_start) / daz),
+            "num": round((az_end - az_start) / daz) + 1,
             "stop": az_end.item(),
         },
         "r": {
