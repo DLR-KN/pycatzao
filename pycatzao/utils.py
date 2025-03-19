@@ -94,7 +94,8 @@ def infer_bin_edges(data):
         return None, data
 
     frac = daz / daz[np.argmax(c)]
-    daz = daz[(frac > 0.9) & (frac < 1.1)].mean()
+    sel = (frac > 0.9) & (frac < 1.1)
+    daz = np.average(daz[sel], weights=c[sel])
 
     az_num = round(360.0 / daz)
     daz = 360.0 / az_num
