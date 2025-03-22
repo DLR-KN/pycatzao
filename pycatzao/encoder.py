@@ -48,15 +48,15 @@ def make_summary(summary):
 
     Raises:
         ValueError:
-            The ASCII representation of the summary has to be not longer than 0xFFFF
+            The ASCII representation of the summary has to be not longer than 255
             characters.
     """
     chars = summary.encode("ascii")
     n = len(chars)
-    if n > 0xFFFF:  # pragma: no cover
+    if n > 255:  # pragma: no cover
         raise ValueError(
-            f"Summary message is too long. Not more than {0xFFFF} ASCII symbols are"
-            " allowed. See specification of I240/030 for details."
+            "Summary message is too long. Not more than 255 ASCII symbols are allowed. "
+            "See specification of I240/030 for details."
         )
 
     return {
