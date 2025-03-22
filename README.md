@@ -5,13 +5,13 @@
 [![Unit tests](https://github.com/DLR-KN/pycatzao/actions/workflows/run_tests.yml/badge.svg)](https://codecov.io/gh/DLR-KN/pycatzao)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-[[Documentation]](https://DLR-KN.github.io/pycatzao/)
+[[Documentation 📚]](https://DLR-KN.github.io/pycatzao/)
 
 # Pycatzao
 
 Pycatzao is a pure Python library for encoding, decoding and compressing Asterix CAT240 messages.
 
-## Usage & Documentation
+## 📚 Usage & Documentation
 
 Pycatzao releases are available as wheel packages for macOS, Windows and Linux on [PyPI](https://pypi.org/project/pycatzao/).
 Install it using pip:
@@ -44,11 +44,11 @@ for block in pycatzao.decode_file("my-cat240-data.bin"):
 
 See [examples/cat240toHDF5.py](https://github.com/DLR-KN/pycatzao/blob/main/examples/cat240toHDF5.py) for a more elaborated example or [our documentation](https://DLR-KN.github.io/pycatzao) for a full list of available functions. Note, however, that you won't find an introduction into Asterix CAT240 here since we assume that you know the basics of the standard. If you need such an introduction though, simply search for _Asterix CAT240_ with a search engine of your choice or directly consult [https://www.eurocontrol.int/asterix](https://www.eurocontrol.int/asterix).
 
-## Goals
+## 🎯 Goals
 
 The purpose of this project is to have a slim and Python-only library with almost no dependencies. We don't plan to add support for other Asterix formats and there are certainly other libraries out there than can parse Asterix CAT240 faster than Pycatzao. However, does this mean that Pycatzao is slow? Certainly not! Pycatzao can easily parse data faster than real-time. On a decently equipped laptop one hour of compressed data is decoded in less than 100 seconds; this is more than 60k message per second... fast enough for most applications.
 
-## Contributing
+## 👷 Contributing
 
 Contributions are welcome! If you find any issues or have suggestions for improvements, please feel free to submit a pull request.
 
