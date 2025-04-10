@@ -2,7 +2,7 @@
 
 If you need the decoded data more structured as a table, use :func:`join_blocks` for
 this! This function will join (type `002`) messages by repeating scalar values and
-return a single `dict` that can be fed directly to, e.g., a `pandas.DataFrame`.
+return a single `dict` that can be fed directly to, e.g., a :class:`pandas.DataFrame`.
 
 Typically, the azimuth and range values follow an implicit binning scheme. Sometimes,
 this scheme can be inferred by parsing a handful of messages. We implement a simple
@@ -130,7 +130,8 @@ def join_blocks(blocks, *, show_progress=False):
 
     Joins the fields `tod`, `az`, `r`, and `amp` of decoded Asterix CAT240 blocks into a
     rectangular table by repeating the scalar values (`tod` and `az`). The result can
-    directly be fed to, e.g., `pandas.DataFrame`. Messages of type `001` are skipped.
+    directly be fed to, e.g., :class:`pandas.DataFrame`. Messages of type `001` are
+    skipped.
 
     Example:
         >>> data = b'\\xf0\\x00\\x13\\xd1...'
