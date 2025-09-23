@@ -90,6 +90,8 @@ def _decode_block(data):
 
             msg["az"] = _utils._circular_mean(start_az, end_az)
             msg["az_cell_size"] = _utils._circular_distance(end_az - start_az)
+            if msg["az_cell_size"] < 0:
+                msg["az_cell_size"] += 360.0
 
             # I240/048
             compression = data[i] & 0x80 == 0x80

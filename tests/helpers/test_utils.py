@@ -31,6 +31,9 @@ def random_type2_message(rng, *, n_max, dtype, tod, compress):
     if az12 < 0:
         az12 += 360
 
+    if daz12 < 0:
+        daz12 += 360
+
     return pycatzao.encode(
         pycatzao.make_video_message(
             amp,

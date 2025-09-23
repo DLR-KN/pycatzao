@@ -48,6 +48,7 @@ def test_single_type2_message(seed, n_max, dtype, compress, tod):
     assert decoded["idx"] == msg["idx"]
 
     assert decoded["az"] == pytest.approx(msg["az"], abs=0.01)
+    assert decoded["az_cell_size"] == pytest.approx(msg["az_cell_size"], abs=0.01)
 
     non_zero = msg["amp"] > 0
     assert len(decoded["r"]) == np.sum(non_zero)
