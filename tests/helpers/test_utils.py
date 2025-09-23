@@ -17,7 +17,8 @@ def random_type2_message(rng, *, n_max, dtype, tod, compress):
     n = rng.integers(1, n_max + 1)
     amp = rng.integers(0, np.iinfo(dtype).max, size=n).astype(dtype)
 
-    tod = rng.uniform(0, 24 * 60 * 60) if tod else -1
+    if tod == "random":
+        tod = rng.uniform(0, 24 * 60 * 60)
 
     az1 = np.deg2rad(start_az)
     az2 = np.deg2rad(end_az)

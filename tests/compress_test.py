@@ -12,7 +12,7 @@ import pycatzao
 @pytest.mark.parametrize("n_msg", [1, 5, 10])
 @pytest.mark.parametrize("buffer_size", [1, 10, 100, -1])
 @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
-@pytest.mark.parametrize("tod", [True, False])
+@pytest.mark.parametrize("tod", ["random", -1])
 @pytest.mark.parametrize("compress_twice", [False, True])
 def test_compress_file(seed, n_msg, buffer_size, dtype, tod, compress_twice):
     encoded = [
@@ -49,7 +49,7 @@ def test_compress_file(seed, n_msg, buffer_size, dtype, tod, compress_twice):
         assert block1["sac"] == block2["sac"]
         assert block1["sic"] == block2["sic"]
         assert block1["type"] == block2["type"]
-        if tod:
+        if tod == "random":
             assert block1["tod"] == block2["tod"]
 
     assert decoded[0]["summary"] == expected[0]["summary"]

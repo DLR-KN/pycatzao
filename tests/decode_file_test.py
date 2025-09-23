@@ -14,7 +14,7 @@ import pycatzao
 @pytest.mark.parametrize("limit_size", [False, True])
 @pytest.mark.parametrize("buffer_size", [1, 10, 100, -1])
 @pytest.mark.parametrize("compress", [False, True])
-@pytest.mark.parametrize("tod", [True, False])
+@pytest.mark.parametrize("tod", ["random", -1])
 @pytest.mark.parametrize("tail", [False, True])
 def test_decode_file(seed, n_msg, limit_size, buffer_size, compress, tod, tail):
     encoded = [
@@ -68,7 +68,7 @@ def test_decode_file(seed, n_msg, limit_size, buffer_size, compress, tod, tail):
             assert block1["sac"] == block2["sac"]
             assert block1["sic"] == block2["sic"]
             assert block1["type"] == block2["type"]
-            if tod:
+            if tod == "random":
                 assert block1["tod"] == block2["tod"]
 
         assert decoded[0]["summary"] == expected[0]["summary"]

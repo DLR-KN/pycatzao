@@ -12,7 +12,7 @@ import pycatzao
 @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
 @pytest.mark.parametrize("add_summary", [False, True])
 @pytest.mark.parametrize("compress", [False, True])
-@pytest.mark.parametrize("tod", [True, False])
+@pytest.mark.parametrize("tod", ["random", -1])
 def test_join_blocks(seed, n_msg, dtype, add_summary, compress, tod):
     rng = np.random.default_rng(seed)
     encoded = [
@@ -25,7 +25,7 @@ def test_join_blocks(seed, n_msg, dtype, add_summary, compress, tod):
     expected = defaultdict(list)
     for block in pycatzao.decode(b"".join(encoded))[0]:
         for r, a in zip(block["r"], block["amp"], strict=True):
-            if tod:
+            if tod == "random":
                 expected["tod"].append(block["tod"])
 
             expected["az"].append(block["az"])
@@ -45,7 +45,7 @@ def test_join_blocks(seed, n_msg, dtype, add_summary, compress, tod):
 
     table = pycatzao.join_blocks(pycatzao.decode(b"".join(encoded))[0])
 
-    if tod:
+    if tod == "random":
         assert table["tod"].tolist() == pytest.approx(expected["tod"])
     else:
         assert np.all(np.isnan(table["tod"]))

@@ -6,7 +6,7 @@ import pycatzao
 
 @pytest.mark.parametrize("n_msg", [0, 1, 5])
 @pytest.mark.parametrize("compress", [False, True])
-@pytest.mark.parametrize("tod", [True, False])
+@pytest.mark.parametrize("tod", [1, -1])
 def test_too_few_messages(n_msg, compress, tod):
     sac, sic = 0, 0
     encoded = [
@@ -56,7 +56,7 @@ def test_too_few_messages(n_msg, compress, tod):
     ],
 )
 @pytest.mark.parametrize("compress", [False, True])
-@pytest.mark.parametrize("tod", [False, True])
+@pytest.mark.parametrize("tod", [1, -1])
 @pytest.mark.parametrize("tail", [False, True])
 def test_binning_inference(az_start, az_end, az_binning_scheme, compress, tod, tail):
     sac, sic = 0, 0

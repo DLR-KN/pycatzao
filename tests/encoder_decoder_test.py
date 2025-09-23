@@ -28,7 +28,7 @@ def test_single_type1_message(summary, sac, sic, tod):
 @pytest.mark.parametrize("n_max", [1, 2, 10, 100, 1000])
 @pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32])
 @pytest.mark.parametrize("compress", [True, False])
-@pytest.mark.parametrize("tod", [True, False])
+@pytest.mark.parametrize("tod", ["random", -1])
 def test_single_type2_message(seed, n_max, dtype, compress, tod):
     rng = np.random.default_rng(seed)
     encoded, msg = test_utils.random_type2_message(
@@ -62,5 +62,5 @@ def test_single_type2_message(seed, n_max, dtype, compress, tod):
     assert decoded["amp"] == pytest.approx(msg["amp"][non_zero])
     assert decoded["amp"].dtype == dtype
 
-    if tod:
+    if tod == "random":
         assert decoded["tod"] == pytest.approx(msg["tod"], abs=0.01)
