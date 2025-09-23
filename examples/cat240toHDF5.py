@@ -1,6 +1,7 @@
 # noqa: D100
 
 import argparse
+import functools
 import itertools
 import pathlib
 
@@ -11,97 +12,200 @@ from tqdm import tqdm
 import pycatzao
 
 
-def toHDF(*, cat240_file, hdf5_file, n_read_binning=100_000_000, verbose=True):
+def _hour(*, tod):
+    return int(tod // 3600) % 24
+
+
+def _join_blocks(blocks, chunk, verbose=False):
+    t, r1, r2, az1, az2, amp = [], [], [], [], [], []
+
+    tod = -1
+    for block in tqdm(blocks, desc="Decoding blocks", disable=not verbose):
+        if block["az_cell_size"] > 0 and block["amp"].size > 0:
+            if block["tod"] < tod:
+                raise ValueError(
+                    "ToD of previous block: {tod} < {block['tod']=}. "
+                    "ToD values of subsequent blocks have to increase."
+                )
+
+            if chunk and _hour(tod=tod) != _hour(tod=block["tod"]):
+                if len(t) > 0:
+                    yield (
+                        _hour(tod=tod),
+                        dict(
+                            tod=np.concatenate(t),
+                            r1=np.concatenate(r1),
+                            r2=np.concatenate(r2),
+                            az1=np.concatenate(az1),
+                            az2=np.concatenate(az2),
+                            amp=np.concatenate(amp),
+                        ),
+                    )
+
+                tod = block["tod"]
+                t, r1, r2, az1, az2, amp = [], [], [], [], [], []
+
+            r = block["r"]
+            dr = block["r_cell_size"]
+            r1.append(r - dr / 2)
+            r2.append(r + dr / 2)
+
+            az = block["az"]
+            daz = block["az_cell_size"]
+            az1.append(np.full_like(r, az - daz / 2))
+            az2.append(np.full_like(r, az + daz / 2))
+
+            amp.append(block["amp"])
+
+            t.append(np.full_like(r, block["tod"]))
+
+    if len(t) > 0:
+        yield (
+            _hour(tod=tod),
+            dict(
+                tod=np.concatenate(t),
+                r1=np.concatenate(r1),
+                r2=np.concatenate(r2),
+                az1=np.concatenate(az1),
+                az2=np.concatenate(az2),
+                amp=np.concatenate(amp),
+            ),
+        )
+
+
+def _angle_diff_sign(diff):
+    return (diff < -180) | ((diff > 0) & (diff < 180))
+
+
+def _find_cycle_start(az, *, verbose=False):
+    first = np.zeros(az.shape, dtype=np.uint32)
+    for i in tqdm(range(1, az.size), desc="Finding cycle lengths", disable=not verbose):
+        m = _angle_diff_sign(az[first[i - 1] : i][::-1] - az[i]) > 0
+        q = np.flatnonzero(m[:-1] & ~m[1:])
+        first[i] = i - q[0] - 1 if q.size > 0 else first[i - 1]
+
+    return first
+
+
+def _make_cycle_lookup(blocks, *, verbose=False):
+    first = _find_cycle_start(blocks["az1"], verbose=verbose)
+    last = np.arange(first.size)
+
+    t = blocks["tod"]
+    mask = np.full(t.shape, True, dtype=np.bool)
+    mask[:-1] = t[1:] > t[:-1]
+
+    return {"cycle/first": first[mask], "cycle/last": last[mask], "cycle/tod": t[mask]}
+
+
+def toHDF(
+    *,
+    cat240_files,
+    hdf5_file_pattern,
+    chunk,
+    force_overwrite,
+    verbose=True,
+):
     """Converts an Asterix CAT240 into an HDF file.
 
     Args:
-        cat240_file (str | pathlib.Path):
+        cat240_files (list[str | pathlib.Path]):
             Filename of the cat240 file.
-        hdf5_file (str | pathlib.Path):
-            Filename of the HDF5 file.
-        n_read_binning (int):
-            Max. number of bins to read for inferring binning scheme.
+        hdf5_file_pattern (Callable[[datetime.date], str | pathlib.Path]):
+            Pattern that takes a date and returns the HDF5 file name.
+        chunk (bool):
+            Write to separate HDF5 files per hour.
+        force_overwrite (bool):
+            Overwrite HDF5 files.
         verbose (bool):
             Print status to console.
+
+    Returns:
+        (list[pathlib.Path]): List of generated HDF5 files.
     """
     log = print if verbose else lambda *args, **kwargs: None
 
-    df = dict()
-    for blocks in tqdm(
-        itertools.batched(
-            pycatzao.decode_file(cat240_file, size=-1, buffer_size=100_000),
-            1_000_000,
-        ),
-        desc=f"Decoding CAT240 data from {cat240_file}",
+    hdf5_files = []
+
+    f, path = None, None
+    decode_file = functools.partial(pycatzao.decode_file, buffer_size=100_000_000)
+    for h, df in _join_blocks(
+        itertools.chain.from_iterable(map(decode_file, cat240_files)),
+        chunk=chunk,
+        verbose=verbose,
     ):
-        cols = pycatzao.join_blocks(blocks)
-        for k in cols:
-            df[k] = np.append(df[k], cols[k]) if k in df else cols[k]
+        df |= _make_cycle_lookup(df, verbose=verbose)
 
-    log("\nFinding cycles ...")
-    daz = np.diff(df["az"])
-    df["cycle"] = np.zeros_like(df["az"], dtype=np.uint32)
-    df["cycle"][1:] = np.cumsum(daz < 0)
-    log(f" * found {df['cycle'].max() + 1} cycles in {df['cycle'].size:,} rows")
+        if (p := pathlib.Path(hdf5_file_pattern(h)).resolve()) != path:
+            if f is not None:
+                f.close()
 
-    log("\nInferring binning scheme ...")
-    with open(cat240_file, "rb") as f:
-        bins, _ = pycatzao.infer_bin_edges(f.read(n_read_binning))
+            path = p
 
-    df["az_edges"] = np.linspace(**bins["az"])
-    df["r_edges"] = np.arange(**bins["r"], stop=df["r"].max() + bins["r"]["step"])
+            if path.is_file() and not force_overwrite:
+                raise ValueError(
+                    f"HDF5 file '{path}' already exists. "
+                    "Use --force to enforce overwrite."
+                )
 
-    df["az"] = np.searchsorted(df["az_edges"], df["az"]).astype(np.uint16) - 1
-    df["r"] = np.searchsorted(df["r_edges"], df["r"]).astype(np.uint16) - 1
+            f = h5py.File(path, "w")
+            hdf5_files.append(path)
 
-    if verbose:
-        bins = df["az_edges"]
-        log(
-            f" * az(imuth) bin edges ({bins.size - 1} bins): "
-            f"{bins[0]:.2f}° .. {bins[-1]:.2f}°"
-        )
+        assert f is not None
 
-        bins = df["r_edges"]
-        log(
-            f" *   r(ange) bin edges ({bins.size - 1} bins): "
-            f"{bins[0]:.2f}m .. {bins[-1]:.2f}m\n"
-        )
-
-    with h5py.File(hdf5_file, "w") as f:
-        for k in tqdm(df, desc=f"Writing data to {hdf5_file}", disable=not verbose):
+        for k in df:
             f.create_dataset(k, data=df[k], compression="gzip")
 
         f["tod"].attrs["desc"] = "Time of Day (UTC)"
         f["tod"].attrs["unit"] = "second"
 
-        f["az"].attrs["desc"] = "Index of azimuth bins"
-        f["r"].attrs["desc"] = "Index of range bins"
+        f["az1"].attrs["desc"] = "Low edge of azimuth cell"
+        f["az1"].attrs["unit"] = "degree"
+
+        f["az2"].attrs["desc"] = "High edge of azimuth cell"
+        f["az2"].attrs["unit"] = "degree"
+
+        f["r1"].attrs["desc"] = "Low edge of range cell"
+        f["r1"].attrs["unit"] = "meter"
+
+        f["r2"].attrs["desc"] = "High edge of range cell"
+        f["r2"].attrs["unit"] = "meter"
+
         f["amp"].attrs["desc"] = "Amplitude"
-        f["cycle"].attrs["desc"] = "Number of full rotations of the radar antenna"
 
-        f["az_edges"].attrs["desc"] = "Bin edges of clockwise azimuth"
-        f["az_edges"].attrs["unit"] = "degree"
+        f["cycle/tod"].attrs["desc"] = "Time of Day (UTC)"
+        f["cycle/first"].attrs["desc"] = "Index of cycle start"
+        f["cycle/last"].attrs["desc"] = "Index of cycle end"
 
-        f["r_edges"].attrs["desc"] = "Bin edges of range"
-        f["r_edges"].attrs["unit"] = "meter"
+    if f is not None:
+        f.close()
+
+    log("done.")
+
+    return hdf5_files
 
 
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(
         prog="cat240toHDF5",
-        description="A handy tool that converts Asterix CAT240 data into an HDF5 file.",
+        description="A handy tool that converts Asterix CAT240 data into HDF5 files.",
     )
     parser.add_argument(
-        "--cat240_file",
+        "cat240_files",
         type=pathlib.Path,
-        required=True,
-        help="CAT240 input file",
+        nargs="+",
+        help="Path(s) to the CAT240 file(s)",
     )
     parser.add_argument(
-        "--hdf5_file",
-        type=pathlib.Path,
-        required=True,
-        help="HDF5 output file",
+        "--prefix",
+        type=str,
+        default="",
+        help="Prefix of HDF5 file names",
+    )
+    parser.add_argument(
+        "--hourly",
+        action="store_true",
+        help="Write to separate HDF5 files per hour instead of a single file.",
     )
     parser.add_argument(
         "-f",
@@ -117,16 +221,23 @@ def main():  # noqa: D103
     )
     p = parser.parse_args()
 
-    if not p.cat240_file.is_file():
-        parser.error(f"Cannot open data file '{p.cat240_file}'")
+    for f in p.cat240_files:
+        if not f.is_file():
+            parser.error(f"Cannot open data file '{f}'")
 
-    if p.hdf5_file.exists() and not p.force:
-        parser.error(
-            f"HDF5 file '{p.hdf5_file}' already exists. "
-            "Use --force to enforce overwrite."
-        )
+    def _pattern(prefix, hour):
+        return f"{prefix}{'' if hour is None else f'{hour:02}_UTC'}.hdf5"
 
-    toHDF(cat240_file=p.cat240_file, hdf5_file=p.hdf5_file, verbose=p.verbose)
+    hdf5_files = toHDF(
+        cat240_files=p.cat240_files,
+        hdf5_file_pattern=lambda h: _pattern(p.prefix, h if p.hourly else None),
+        chunk=p.hourly,
+        force_overwrite=p.force,
+        verbose=p.verbose,
+    )
+
+    if p.verbose:
+        print("Results are written to: " + ", ".join(map(str, hdf5_files)))
 
 
 if __name__ == "__main__":

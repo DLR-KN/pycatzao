@@ -33,6 +33,7 @@ setup(
     ],
     extras_require={
         "dev": [
+            "h5py",
             "pre-commit",
             "pytest",
             "pytest-cov",
