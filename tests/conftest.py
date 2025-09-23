@@ -1,4 +1,5 @@
-import os
+import pathlib
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "helpers"))
+sys.path.append(str(pathlib.Path(__file__).resolve().parent / "helpers"))
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "examples"))
