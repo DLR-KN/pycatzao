@@ -89,7 +89,7 @@ def _find_cycle_start(az, *, verbose=False):
 
 def _make_cycle_lookup(blocks, *, verbose=False):
     first = _find_cycle_start(blocks["az1"], verbose=verbose)
-    last = np.arange(first.size)
+    last = np.arange(first.size, dtype=first.dtype)
 
     t = blocks["tod"]
     mask = np.full(t.shape, True, dtype=np.bool)

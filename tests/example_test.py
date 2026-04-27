@@ -71,3 +71,6 @@ def test_cat240toHDF5(tmp_path):
         with h5py.File(f, "r") as f:
             for k, v in expected.items():
                 assert f[k][:] == pytest.approx(v), k
+
+            assert f["cycle/first"].dtype == np.uint32
+            assert f["cycle/last"].dtype == np.uint32
