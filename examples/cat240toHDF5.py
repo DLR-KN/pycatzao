@@ -92,7 +92,7 @@ def _make_cycle_lookup(blocks, *, verbose=False):
     last = np.arange(first.size, dtype=first.dtype)
 
     t = blocks["tod"]
-    mask = np.full(t.shape, True, dtype=np.bool)
+    mask = np.full(t.shape, True, dtype=bool)
     mask[:-1] = t[1:] > t[:-1]
 
     return {"cycle/first": first[mask], "cycle/last": last[mask], "cycle/tod": t[mask]}
